@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Friday</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    
+</head>
+<body>
+        <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script>
+        // If you modify this array, also update default language / dialect below.
+    
+        var final_transcript = '';
+        var recognizing = false;
+        var ignore_onend;
+        var start_timestamp;
+        if (!('webkitSpeechRecognition' in window)) {
+          upgrade();
+        } else {          
+          var recognition = new webkitSpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+    
+          recognition.onstart = function () {
+            recognizing = true;
+            console.log('info_speak_now');
+    
+          };
+    
+          recognition.onerror = function (event) {        
+            if (event.error != '') {
+              console.log(event.error);
+            }
+          };
+    
+          recognition.onend = function () {
+            recognizing = false;
+            if (ignore_onend) {
+              return;
+            }
+            if (!final_transcript) {
+              return;
+            }
+            console.log('');
+    
+          };
+    
+          recognition.onresult = function (event) {
+            var interim_transcript = '';
+            if (typeof (event.results) == 'undefined') {
+              recognition.onend = null;
+              recognition.stop();
+              upgrade();
+              return;
+            }
+            for (var i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                var socket = io();
+                
+                console.log(event.results[i][0].transcript);
+                socket.emit('isFinal', event.results[i][0].transcript );
+                //final_transcript += event.results[i][0].transcript;
+              }
+            }
+          };
+        }
+    
+    
+    
+    
+        function startButton(event) {
+          if (recognizing) {
+            recognition.stop();
+            return;
+          }
+          final_transcript = '';
+          recognition.lang = 'pt-BR';
+          recognition.start();
+          ignore_onend = false;
+          final_span.innerHTML = '';
+          interim_span.innerHTML = '';
+          start_timestamp = event.timeStamp;
+        }
+    
+    
+    
+    
+      </script>
+</body>
+</html>
